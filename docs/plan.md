@@ -120,7 +120,8 @@ tests/unit · tests/e2e
 ```ts
 // сервисы
 sessionService.login(body: LoginRequest): Promise<LoginResponse>        // { user: SessionUser }
-postService.getFeed(): Promise<Post[]>
+postService.getFeed(cursor?: string): Promise<FeedPage>                 // раунд 2 (§10); в раунде 1 было Promise<Post[]>
+postService.getPost(id: string): Promise<PostDetailsResponse>            // раунд 2
 userService.getProfile(id: string): Promise<UserProfileResponse>         // { user, connections, soundBytes }
 
 // useSessionStore
@@ -132,6 +133,7 @@ logout(): void
 posts: Ref<Post[]>; status: Ref<'idle' | 'pending' | 'success' | 'error'>; error: Ref<string | null>
 ensureLoaded(): Promise<void>   // no-op, если status = pending | success
 reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset(): void   // у setup-стора нет $reset
+// раунд 2 (§10): posts — computed из entities + feedIds; loadMore, hasMore, loadMoreStatus, upsertPost, getPost
 ```
 
 **Технические правила** (по итогам критики):
