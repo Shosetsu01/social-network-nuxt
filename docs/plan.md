@@ -1,6 +1,7 @@
 # План переноса на Vue 3 + Nuxt 4
 
 Основан на [analysis.md](analysis.md) и требованиях ТЗ. Бюджет: 4 часа.
+Правила и роли агентов — [agents/rules.md](agents/rules.md), [agents/roles.md](agents/roles.md).
 Ревизия 2: учтены критика плана (субагент-ревьюер) и требование архитектуры FSD.
 
 ## 1. Цель и Definition of Done
@@ -165,23 +166,23 @@ reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset()
 | # | Часть | Исполнитель | Файлы |
 |---|---|---|---|
 | T0 | Фундамент: scaffold (Nuxt, TS, Pinia, ESLint, Vitest), `#shared` контракты и валидация, `shared/api`, `shared/ui`, `shared/lib`, `shared/config`, токены CSS, сервисы и сторы entities, mock API, unit-тесты | субагент + ревью главного | конфиги, `shared/`, `server/`, `app/shared`, `app/entities/*/{api,model,lib}`, `tests/unit` |
-| T2 | Auth и shell: `auth-by-email`, `logout`, `pages/login`, layouts, `app-header`, `bottom-nav`, middleware, `app.vue` | субагент A | только перечисленное |
+| T2 | Auth и shell: `auth-by-email`, `pages/login`, layouts, `app-header`, `bottom-nav`, middleware | субагент A | только перечисленное |
 | T3 | Feed: `entities/post/ui`, `toggle-like`, `toggle-bookmark`, `widgets/post-feed`, `pages/index` | субагент B | только перечисленное |
-| T4 | Profile: `entities/user/ui`, `widgets/user-profile`, `pages/users/[id]`, `error.vue` | субагент C | только перечисленное |
-| T5 | E2E: Playwright (chromium, `webServer` = build + `node .output/server/index.mjs`), фикстуры, сценарии + живая проверка | субагент D + главный | `playwright.config.ts`, `tests/e2e` |
+| T4 | Profile: `entities/user/ui`, `features/logout`, `widgets/user-profile`, `pages/users/[id]`, `error.vue` | субагент C | только перечисленное |
+| T5 | E2E: Playwright (chromium, `webServer` = build + `node .output/server/index.mjs`), фикстуры, сценарии по UI-контракту; живая проверка — главный | субагент D | `playwright.config.ts`, `tests/e2e`, devDep Playwright |
 | T6 | README, финальная сверка | главный | `README.md` |
 
-T2–T4 идут параллельно в непересекающихся файлах; общие точки — только контракты из T0. Субагенты не коммитят: главный агент проверяет каждую часть и коммитит её отдельно.
+После мержа T0 параллельно стартуют T2–T5, каждый в своём git worktree и в непересекающихся файлах (владение — roles.md). Общие точки — только контракты из T0 и UI-контракт (rules.md §6), поэтому T5 пишет тесты одновременно с реализацией. Logout отдан в T4: кнопка живёт на профиле, и у параллельных треков нет зависимостей друг от друга. Агент коммитит в свою ветку; главный агент проверяет её, отдаёт ревьюеру и мержит в `main` (rebase + fast-forward).
 
 ### Критерии приёмки
 
 **T0:** `build`, `typecheck`, `lint`, `test` зелёные. Unit-тесты: валидация (все ветки), `safeRedirect` (`/x` ок; `//evil`, `/\evil`, `http://…`, не-строка → `/`), toggle-функции (новый объект, исходный не изменён), feed-store (`ensureLoaded` не перезапрашивает; `toggleLike` ±1; `reset`), `formatCompactNumber`. API: `login` 400 / 200 с задержкой ~600 мс, `feed` → 6 постов, `users/:id` → данные или 404.
 
-**T2:** валидация на blur и submit с текстами оригинала; toggle пароля; disabled + спиннер во время запроса; ошибка → `role="alert"`; успех → `safeRedirect(query.redirect)`; Remember me; гейт в обе стороны в SSR и на клиенте; навигация Home / Profile (Profile → `/users/<id текущего>`).
+**T2:** валидация на blur и submit с текстами оригинала; toggle пароля; disabled + спиннер во время запроса; ошибка → `role="alert"`; успех → `safeRedirect(query.redirect)`; Remember me; гейт в обе стороны в SSR и на клиенте; logout — в T4; навигация Home / Profile (Profile → `/users/<id текущего>`).
 
 **T3:** SSR-лента и скелетоны на клиенте; error + Retry; empty; 4 типа вложений и 3 вида шапки; like ±1 с `aria-pressed`; bookmark; ссылки на профили; лайк сохраняется после профиля.
 
-**T4:** loading и error; 404 через `error.vue`; шапка, bio, статистика (1.2K), connections-ссылки, sound bytes; logout только на своём профиле.
+**T4:** loading и error; 404 через `error.vue`; шапка, bio, статистика (1.2K), connections-ссылки, sound bytes; logout (`features/logout`: сессия + сброс ленты → `/login`) только на своём профиле.
 
 **T5** (desktop 1280×800 и mobile 390×844 в chromium; сценарии 2, 3, 9, 11 — только desktop; сессию для части тестов подкладываем через `context.addCookies`):
 1. Без сессии `/` → `/login`.
@@ -199,7 +200,7 @@ T2–T4 идут параллельно в непересекающихся фа
 ## 7. Процесс
 
 - **План целиком:** план → критика (ревьюер с чистым контекстом) → правки. Сделано: это ревизия 2.
-- **Каждая часть:** бриф → реализация (субагент) → проверки (typecheck, lint, unit, e2e, живой прогон) → ревью (субагент-ревьюер) → правки, максимум 3 круга → финальная проверка главным агентом → коммит.
+- **Каждая часть:** бриф (роль из roles.md) → реализация в worktree → самопроверка агента (rules.md §8) → ревью (субагент-ревьюер) → правки, максимум 3 круга → проверка и мерж главным агентом → полный прогон (typecheck, lint, unit, build, e2e) и живая проверка.
 - Отдельную критику брифов T2–T4 опускаем ради времени: брифы выводятся из этого плана, уже прошедшего критику.
 
 Коммиты (Conventional Commits): `docs` (анализ и план) → `chore` (scaffold) → `feat` (контракты и mock API) → `feat(shared)` (UI-кит и токены) → `feat(auth)` → `feat(feed)` → `feat(profile)` → `test(e2e)` → `docs` (README).
@@ -227,6 +228,6 @@ T2–T4 идут параллельно в непересекающихся фа
 |---|---|
 | Анализ, план, критика, ревизия | 0:00–0:50 |
 | T0 фундамент + ревью | 0:50–1:30 |
-| T2 / T3 / T4 параллельно + ревью | 1:30–2:30 |
-| T5 e2e, живая проверка, фиксы | 2:30–3:10 |
+| T2 / T3 / T4 / T5 параллельно + ревью | 1:30–2:30 |
+| Мерж, прогон e2e, живая проверка, фиксы | 2:30–3:10 |
 | T6 README, сверка, буфер | 3:10–3:45 |
