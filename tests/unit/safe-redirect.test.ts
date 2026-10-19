@@ -17,6 +17,11 @@ describe('safeRedirect', () => {
     'http://evil.com',
     'https://evil.com/users/2',
     'javascript:alert(1)',
+    '/.//evil.com',
+    '/a/..//evil.com',
+    '/%2e%2e//evil.com',
+    '/%2e//evil.com',
+    '/./\\evil.com',
     'users/2',
     '',
   ])('falls back to home for unsafe target %j', (input) => {
