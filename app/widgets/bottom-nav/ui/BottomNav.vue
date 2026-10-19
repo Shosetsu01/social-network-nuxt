@@ -51,7 +51,10 @@ const session = useSessionStore()
   position: sticky;
   bottom: 0;
   z-index: 10;
+  /* Insets are 0 unless the viewport uses viewport-fit=cover. */
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
   padding-bottom: env(safe-area-inset-bottom);
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
 }
@@ -74,14 +77,18 @@ const session = useSessionStore()
   justify-content: center;
   gap: var(--space-1);
   min-height: calc(var(--tap-size) + var(--space-4));
+  /* Transparent until active, so the indicator does not shift the content. */
+  border-top: 3px solid transparent;
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
   text-decoration: none;
 }
 
+/* Not colour alone (WCAG 1.4.1): the active tab also gets a top bar and a bold label. */
 .bottom-nav__link[aria-current='page'] {
+  border-top-color: var(--color-brand-strong);
   color: var(--color-text);
+  font-weight: var(--font-weight-bold);
 }
 
 .bottom-nav__link[aria-current='page'] .bottom-nav__icon {

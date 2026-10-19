@@ -22,9 +22,14 @@ async function onSuccess(): Promise<void> {
 
 <template>
   <div class="login-page">
-    <h1 class="login-page__title">
-      Log in
-    </h1>
+    <div class="login-page__intro">
+      <h1 class="login-page__title">
+        Log in
+      </h1>
+      <p class="login-page__subtitle">
+        Enter your email and password to securely access your account and manage your services.
+      </p>
+    </div>
     <LoginForm @success="onSuccess" />
   </div>
 </template>
@@ -36,9 +41,19 @@ async function onSuccess(): Promise<void> {
   gap: var(--space-5);
 }
 
+.login-page__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .login-page__title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
+}
+
+.login-page__subtitle {
+  color: var(--color-text-muted);
 }
 </style>

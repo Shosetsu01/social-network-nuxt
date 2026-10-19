@@ -66,6 +66,8 @@ const session = useSessionStore()
   position: sticky;
   top: 0;
   z-index: 10;
+  /* Insets are 0 unless the viewport uses viewport-fit=cover. */
+  padding-top: env(safe-area-inset-top);
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
 }
@@ -76,7 +78,9 @@ const session = useSessionStore()
   gap: var(--space-3);
   max-width: var(--content-max-width);
   margin-inline: auto;
-  padding: var(--space-2) var(--space-4);
+  padding-block: var(--space-2);
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
 }
 
 .app-header__brand {

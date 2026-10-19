@@ -12,7 +12,9 @@
   place-items: center;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: var(--space-4);
+  /* Insets are 0 unless the viewport uses viewport-fit=cover. */
+  padding: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right))
+    max(var(--space-4), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
   font-family: var(--font-display);
 }
 

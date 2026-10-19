@@ -25,17 +25,9 @@ import { BottomNav } from '@widgets/bottom-nav'
   min-height: 100dvh;
 }
 
+/* Content width and gutters belong to pages and widgets. */
 .default-layout__main {
   flex: 1;
   width: 100%;
-  max-width: var(--content-max-width);
-  margin-inline: auto;
-  padding: var(--space-4);
-}
-
-@media (min-width: 640px) {
-  .default-layout__main {
-    padding-block: var(--space-5);
-  }
 }
 </style>
