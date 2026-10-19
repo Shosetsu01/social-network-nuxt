@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { PostCardSkeleton, postService, useFeedStore } from '@entities/post'
-import { ErrorState } from '@shared/ui'
+import { routes } from '@shared/config'
+import { AppBackLink, ErrorState } from '@shared/ui'
 import { PostDetails } from '@widgets/post-details'
 
 const NOT_FOUND_STATUS = 404
@@ -48,6 +49,11 @@ watch(error, value => throwIfNotFound(value?.statusCode))
 
 <template>
   <div class="post-page">
+    <!-- Shown in every state: the way back must not wait for the post. -->
+    <AppBackLink
+      class="post-page__back"
+      :fallback="routes.home"
+    />
     <PostDetails
       v-if="status === 'success' && post && comments"
       :post="post"
@@ -79,6 +85,11 @@ watch(error, value => throwIfNotFound(value?.statusCode))
   margin-inline: auto;
 }
 
+/* The arrow lines up with the content edge: 4px margin + the link's own 12px padding on mobile. */
+.post-page__back {
+  margin: var(--space-2) var(--space-1);
+}
+
 .post-page__loading {
   background: var(--color-surface);
 }
@@ -94,6 +105,10 @@ watch(error, value => throwIfNotFound(value?.statusCode))
 
   .post-page__error {
     margin: 0;
+  }
+
+  .post-page__back {
+    margin: 0 0 var(--space-2) calc(-1 * var(--space-3));
   }
 
   .post-page__loading {
