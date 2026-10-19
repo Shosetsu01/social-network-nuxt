@@ -9,6 +9,7 @@ const CURRENT_USER_ID = '1'
 const HOUR_MS = 60 * 60 * 1000
 
 interface UserSeed {
+  email: string
   user: User
   connectionIds: readonly string[]
   soundBytes: readonly SoundByte[]
@@ -23,11 +24,11 @@ const HTML_TIP_PART_3: SoundByte = {
 
 const USER_SEEDS: readonly UserSeed[] = [
   {
+    email: 'allan@example.com',
     user: {
       id: '1',
       name: 'Allan Paterson',
       avatarUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
-      email: 'allan@example.com',
       bio: 'Flutter Developer | UI/UX Designer | Coffee Lover',
       role: 'Flutter Developer',
       company: 'Brightline Studio',
@@ -43,11 +44,11 @@ const USER_SEEDS: readonly UserSeed[] = [
     ],
   },
   {
+    email: 'sarah.johnson@example.com',
     user: {
       id: '2',
       name: 'Sarah Johnson',
       avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
-      email: 'sarah.johnson@example.com',
       bio: 'Designing calm, accessible interfaces. Sketchbook always in my bag.',
       role: 'Product Designer',
       company: 'Brightline Studio',
@@ -62,11 +63,11 @@ const USER_SEEDS: readonly UserSeed[] = [
     ],
   },
   {
+    email: 'mike.chen@example.com',
     user: {
       id: '3',
       name: 'Mike Chen',
       avatarUrl: 'https://randomuser.me/api/portraits/men/22.jpg',
-      email: 'mike.chen@example.com',
       bio: 'Vue and TypeScript enthusiast. Weekend trail runner.',
       role: 'Frontend Engineer',
       company: 'Northwind Labs',
@@ -79,11 +80,11 @@ const USER_SEEDS: readonly UserSeed[] = [
     soundBytes: [],
   },
   {
+    email: 'dina.foster@example.com',
     user: {
       id: '4',
       name: 'Dina Foster',
       avatarUrl: 'https://randomuser.me/api/portraits/women/68.jpg',
-      email: 'dina.foster@example.com',
       bio: 'Helping teams ship faster with better tooling. Speaker and mentor.',
       role: 'Technology Consultant',
       company: 'Dropbox',
@@ -98,11 +99,11 @@ const USER_SEEDS: readonly UserSeed[] = [
     ],
   },
   {
+    email: 'matt.redman@example.com',
     user: {
       id: '5',
       name: 'Matt Redman',
       avatarUrl: 'https://randomuser.me/api/portraits/men/75.jpg',
-      email: 'matt.redman@example.com',
       bio: 'Tech tutorials every week. New videos every Thursday.',
       role: 'Video Creator',
       company: 'Redman Media',
@@ -117,11 +118,11 @@ const USER_SEEDS: readonly UserSeed[] = [
     ],
   },
   {
+    email: 'chris.pyne@example.com',
     user: {
       id: '6',
       name: 'Chris Pyne',
       avatarUrl: 'https://randomuser.me/api/portraits/men/46.jpg',
-      email: 'chris.pyne@example.com',
       bio: 'Teaching HTML, CSS and JavaScript one bite-sized tip at a time.',
       role: 'Web Developer & Educator',
       company: 'CodeCraft Academy',
@@ -162,8 +163,10 @@ export function simulateLatency(ms: number): Promise<void> {
 }
 
 export function getSessionUser(): SessionUser {
-  const { id, name, avatarUrl, email } = requireUser(CURRENT_USER_ID)
-  return { id, name, avatarUrl, email }
+  const seed = findSeed(CURRENT_USER_ID)
+  if (!seed) throw new Error('Mock data has no current user')
+  const { id, name, avatarUrl } = seed.user
+  return { id, name, avatarUrl, email: seed.email }
 }
 
 export function getUserProfile(id: string): UserProfileResponse | null {

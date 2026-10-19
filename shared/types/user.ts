@@ -5,7 +5,6 @@ export interface UserSummary {
 }
 
 export interface User extends UserSummary {
-  email: string
   bio: string
   role: string
   company: string

@@ -71,9 +71,9 @@ describe('getUserProfile', () => {
     expect(getUserProfile('1')?.user).toMatchObject({
       id: '1',
       name: 'Allan Paterson',
-      email: 'allan@example.com',
       bio: 'Flutter Developer | UI/UX Designer | Coffee Lover',
     })
+    expect(getUserProfile('1')?.user).not.toHaveProperty('email')
   })
 
   it.each(['2', '3', '4', '5', '6'])('returns user %s with connections as summaries', (id) => {
