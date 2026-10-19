@@ -1,12 +1,11 @@
 import type { UserProfileResponse } from '#shared/types/api'
-import type { MediaImage, Post, SoundByte } from '#shared/types/post'
+import type { MediaImage, SoundByte } from '#shared/types/post'
 import type { SessionUser, User, UserSummary } from '#shared/types/user'
 
 // Artificial latency keeps loading states visible, as in the original app.
-export const MOCK_LATENCY_MS = { login: 600, feed: 400, users: 300 } as const
+export const MOCK_LATENCY_MS = { login: 600, feed: 400, users: 300, posts: 300 } as const
 
-const CURRENT_USER_ID = '1'
-const HOUR_MS = 60 * 60 * 1000
+export const CURRENT_USER_ID = '1'
 
 interface UserSeed {
   email: string
@@ -15,7 +14,7 @@ interface UserSeed {
   soundBytes: readonly SoundByte[]
 }
 
-const HTML_TIP_PART_3: SoundByte = {
+export const HTML_TIP_PART_3: SoundByte = {
   id: 'sb-html-tip-3',
   title: 'HTML 5 Tip - Part 3',
   tag: 'Advice',
@@ -149,12 +148,12 @@ function requireUser(id: string): User {
   return seed.user
 }
 
-function summaryOf(id: string): UserSummary {
+export function summaryOf(id: string): UserSummary {
   const { name, avatarUrl } = requireUser(id)
   return { id, name, avatarUrl }
 }
 
-function picsum(id: number, width: number, height: number, alt: string): MediaImage {
+export function picsum(id: number, width: number, height: number, alt: string): MediaImage {
   return { url: `https://picsum.photos/id/${id}/${width}/${height}`, alt, width, height }
 }
 
@@ -177,97 +176,4 @@ export function getUserProfile(id: string): UserProfileResponse | null {
     connections: seed.connectionIds.map(summaryOf),
     soundBytes: seed.soundBytes.map(soundByte => ({ ...soundByte })),
   }
-}
-
-/** Builds the feed on every call so timestamps stay relative to the request. */
-export function getFeed(now: number): Post[] {
-  const hoursAgo = (hours: number) => new Date(now - hours * HOUR_MS).toISOString()
-
-  return [
-    {
-      id: 'post-1',
-      author: summaryOf('2'),
-      activity: { type: 'connection', target: summaryOf('4'), othersCount: 8 },
-      text: null,
-      attachment: { type: 'image', image: picsum(1011, 1200, 800, 'Woman paddling a red canoe on a calm lake') },
-      createdAt: hoursAgo(1),
-      likes: 45,
-      comments: 12,
-      shares: 4,
-      isLiked: false,
-      isBookmarked: false,
-    },
-    {
-      id: 'post-2',
-      author: summaryOf('3'),
-      activity: { type: 'connection', target: summaryOf('5'), othersCount: 3 },
-      text: null,
-      attachment: {
-        type: 'gallery',
-        images: [
-          picsum(1015, 800, 800, 'River winding through a green mountain valley'),
-          picsum(1016, 800, 800, 'Sunlit canyon walls'),
-          picsum(1018, 800, 800, 'Mountain range under a blue sky'),
-        ],
-      },
-      createdAt: hoursAgo(2),
-      likes: 32,
-      comments: 8,
-      shares: 2,
-      isLiked: true,
-      isBookmarked: false,
-    },
-    {
-      id: 'post-3',
-      author: summaryOf('4'),
-      activity: { type: 'check-in', target: summaryOf('2'), othersCount: 8, place: 'Lady Bird Lake, Austin' },
-      text: null,
-      attachment: null,
-      createdAt: hoursAgo(4),
-      likes: 18,
-      comments: 5,
-      shares: 1,
-      isLiked: false,
-      isBookmarked: false,
-    },
-    {
-      id: 'post-4',
-      author: summaryOf('6'),
-      activity: null,
-      text: 'Here\'s Part 3 Of HTML Mini Series. Hope You all will enjoy',
-      attachment: { type: 'sound-byte', soundByte: { ...HTML_TIP_PART_3 } },
-      createdAt: hoursAgo(6),
-      likes: 64,
-      comments: 21,
-      shares: 9,
-      isLiked: false,
-      isBookmarked: true,
-    },
-    {
-      id: 'post-5',
-      author: summaryOf(CURRENT_USER_ID),
-      activity: null,
-      text: 'Was great meeting up with Anna Ferguson and Dave Bishop at the breakfast talk!',
-      attachment: { type: 'image', image: picsum(1060, 1200, 800, 'Barista pouring coffee into a cup') },
-      createdAt: hoursAgo(9),
-      likes: 27,
-      comments: 6,
-      shares: 0,
-      isLiked: false,
-      isBookmarked: false,
-    },
-    {
-      id: 'post-6',
-      author: summaryOf('5'),
-      activity: null,
-      text: 'Watch My New Video released on Nov 12th 2020. Do Subscribe & Like.',
-      attachment: { type: 'video', poster: picsum(0, 1280, 720, 'Laptop on a wooden desk') },
-      createdAt: hoursAgo(26),
-      likes: 112,
-      comments: 45,
-      shares: 17,
-      isLiked: false,
-      isBookmarked: false,
-    },
-  ]
 }

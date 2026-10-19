@@ -3,6 +3,7 @@ import { PostCard, PostCardSkeleton, useFeedStore } from '@entities/post'
 import { BookmarkButton } from '@features/toggle-bookmark'
 import { LikeButton } from '@features/toggle-like'
 import { ErrorState } from '@shared/ui'
+import FeedLoadMore from './FeedLoadMore.vue'
 
 const SKELETON_COUNT = 3
 
@@ -27,33 +28,33 @@ const feed = useFeedStore()
       No posts yet.
     </p>
 
-    <ul
-      v-else-if="feed.status === 'success'"
-      class="post-feed__list"
-    >
-      <li
-        v-for="(post, index) in feed.posts"
-        :key="post.id"
-        class="post-feed__item"
-      >
-        <PostCard
-          :post="post"
-          :is-eager="index === 0"
+    <template v-else-if="feed.status === 'success'">
+      <ul class="post-feed__list">
+        <li
+          v-for="(post, index) in feed.posts"
+          :key="post.id"
+          class="post-feed__item"
         >
-          <template #actions>
-            <LikeButton
-              :post-id="post.id"
-              :is-liked="post.isLiked"
-              :count="post.likes"
-            />
-            <BookmarkButton
-              :post-id="post.id"
-              :is-bookmarked="post.isBookmarked"
-            />
-          </template>
-        </PostCard>
-      </li>
-    </ul>
+          <PostCard
+            :post="post"
+            :is-eager="index === 0"
+          >
+            <template #actions>
+              <LikeButton
+                :post-id="post.id"
+                :is-liked="post.isLiked"
+                :count="post.likes"
+              />
+              <BookmarkButton
+                :post-id="post.id"
+                :is-bookmarked="post.isBookmarked"
+              />
+            </template>
+          </PostCard>
+        </li>
+      </ul>
+      <FeedLoadMore />
+    </template>
 
     <!-- idle and pending: the client navigated here before the feed arrived. -->
     <div

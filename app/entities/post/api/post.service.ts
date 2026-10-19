@@ -1,6 +1,8 @@
-import type { Post } from '#shared/types/post'
+import type { FeedPage } from '#shared/types/api'
 import { http } from '@shared/api'
 
 export const postService = {
-  getFeed: (): Promise<Post[]> => http<Post[]>('/api/feed'),
+  // The first page is exactly `/api/feed`, with no query.
+  getFeed: (cursor?: string): Promise<FeedPage> =>
+    http<FeedPage>('/api/feed', { query: cursor === undefined ? undefined : { cursor } }),
 }
