@@ -39,3 +39,11 @@ export interface Post {
   isLiked: boolean
   isBookmarked: boolean
 }
+
+export interface PostComment {
+  id: string
+  author: UserSummary
+  text: string
+  /** ISO 8601 */
+  createdAt: string
+}

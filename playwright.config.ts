@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
-const PORT = 3005
+// E2E_PORT lets parallel worktrees run their own server: with reuseExistingServer a shared port would test someone else's build.
+const PORT = Number(process.env.E2E_PORT) || 3005
 const BASE_URL = `http://localhost:${PORT}`
 
 export default defineConfig({

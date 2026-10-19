@@ -107,10 +107,24 @@
 | Profile: connections | `ul aria-label="Connections"`, элементы — ссылки на `/users/:id` |
 | Profile: выход | `button` «Log out», только на своём профиле |
 | 404 | `h1` «Page not found», ссылка «Back to feed» (`clearError({ redirect: '/' })`) |
+| **Раунд 2** | |
+| Feed: подгрузка | пока грузится следующая страница, внизу контейнер `data-testid="feed-loading-more"` с `aria-busy="true"` |
+| Feed: ошибка подгрузки | `role="alert"` «Could not load more posts.» + `button` «Retry» (под загруженными карточками, они остаются) |
+| Feed: конец ленты | текст «You're all caught up.» |
+| Feed: озвучка | визуально скрытый `role="status"`: «Loaded N more posts.» после каждой подгрузки |
+| Card: аватар | ссылка на `/users/:id` с `aria-hidden="true"` и `tabindex="-1"` (доступная ссылка — имя автора) |
+| Card: время | ссылка на `/posts/:id`, содержит `<time>` |
+| Card: комментарии | ссылка на `/posts/:id`; число по-прежнему в `data-testid="comment-count"` |
+| Post: заголовок | `h1` «Post by <имя автора>» (может быть визуально скрыт); `<title>` «Post by <имя> · Socio Network» |
+| Post: карточка | та же `article data-testid="post-card"` с «Like» и «Bookmark»; без ссылок на саму себя |
+| Post: комментарии | `h2` «Comments»; `ul aria-label="Comments"`, элементы `li data-testid="comment"` со ссылкой на автора, текстом и временем; пусто — «No comments yet.» |
+| Post: loading / error / 404 | контейнер `aria-busy="true"`; `role="alert"` «Could not load the post.» + «Retry» (`ErrorState`); неизвестный id → «Page not found» |
+| Back | ссылка (`AppBackLink` из `@shared/ui`) с именем «Back»: при истории внутри приложения `router.back()`, иначе переход на `fallback`. В SSR — обычная ссылка на `fallback`. Только на чужом профиле и на странице поста |
+| Profile: loading | контейнер `aria-busy="true"`, скелетон `data-testid="profile-skeleton"`, визуально скрытый текст «Loading profile…» |
 
 **Мок-данные (фиксированы для e2e):**
 - текущий пользователь — id `1`, «Allan Paterson»; есть пользователи `2`–`6`; id `999` не существует;
-- в ленте ровно 6 постов от разных авторов;
+- в ленте 30 постов, страница — 6; первая страница — прежние `post-1`…`post-6` от разных авторов (раунд 2, plan.md §10);
 - задержки: login ~600 мс, feed ~400 мс (чтобы были видны loading-состояния).
 
 **Cookie сессии:** `socio_session` (сессионная) и `socio_session_persist` (30 дней).
@@ -128,7 +142,7 @@
 
 ## 8. Рабочий процесс агента
 
-1. **Окружение.** Работаешь в своём git worktree (ветка выдаётся при запуске). Первая команда — `npm ci --prefer-offline`. Dev-сервер — только на своём порту (T2 → 3002, T3 → 3003, T4 → 3004, T5 → 3005). Останавливай сервер только по своему порту: `kill $(lsof -ti :<порт>)`. `pkill -f` запрещён: он убивает серверы других агентов.
+1. **Окружение.** Работаешь в своём git worktree (ветка выдаётся при запуске). Первая команда — `npm ci --prefer-offline`. Dev-сервер — только на своём порту (T2 → 3002, T3 → 3003, T4 → 3004, T5 → 3005; раунд 2: A → 3012, B → 3013). E2E запускай на своём порту: `E2E_PORT=<порт> npm run test:e2e` (A → 3022, B → 3023). Останавливай сервер только по своему порту: `kill $(lsof -ti :<порт>)`. `pkill -f` запрещён: он убивает серверы других агентов.
 2. **Понимание.** Прочитай контракты и код зависимостей. Если что-то неясно — смотри §1 (приоритет источников). Не угадывай API: проверь в коде.
 3. **Реализация** строго в своих файлах и в рамках критериев приёмки plan.md §6.
 4. **Самопроверка** (все пункты обязательны):
