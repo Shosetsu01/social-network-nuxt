@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useSessionStore } from '@entities/session'
 import { userService } from '@entities/user'
-import { AppButton, AppSpinner } from '@shared/ui'
+import { AppSpinner, ErrorState } from '@shared/ui'
 import { UserProfile } from '@widgets/user-profile'
 
 const NOT_FOUND_STATUS = 404
@@ -48,20 +48,11 @@ watch(error, value => throwIfNotFound(value?.statusCode))
       :profile="profile"
       :is-own-profile="isOwnProfile"
     />
-    <div
+    <ErrorState
       v-else-if="status === 'error'"
-      class="profile-page__state"
-    >
-      <p
-        class="profile-page__error"
-        role="alert"
-      >
-        Could not load the profile.
-      </p>
-      <AppButton @click="refresh()">
-        Retry
-      </AppButton>
-    </div>
+      message="Could not load the profile."
+      @retry="refresh()"
+    />
     <p
       v-else
       class="profile-page__state"
@@ -90,12 +81,6 @@ watch(error, value => throwIfNotFound(value?.statusCode))
   min-height: 16rem;
   color: var(--color-text-muted);
   text-align: center;
-}
-
-.profile-page__error {
-  flex-basis: 100%;
-  color: var(--color-danger);
-  font-weight: var(--font-weight-bold);
 }
 
 @media (min-width: 640px) {

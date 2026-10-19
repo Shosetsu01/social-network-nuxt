@@ -2,7 +2,7 @@
 import { PostCard, PostCardSkeleton, useFeedStore } from '@entities/post'
 import { BookmarkButton } from '@features/toggle-bookmark'
 import { LikeButton } from '@features/toggle-like'
-import { AppButton } from '@shared/ui'
+import { ErrorState } from '@shared/ui'
 
 const SKELETON_COUNT = 3
 
@@ -10,21 +10,15 @@ const feed = useFeedStore()
 </script>
 
 <template>
-  <section class="post-feed">
-    <div
+  <section
+    class="post-feed"
+    :class="{ 'post-feed--error': feed.status === 'error' }"
+  >
+    <ErrorState
       v-if="feed.status === 'error'"
-      class="post-feed__state"
-    >
-      <p role="alert">
-        {{ feed.error }}
-      </p>
-      <AppButton
-        variant="secondary"
-        @click="feed.reload()"
-      >
-        Retry
-      </AppButton>
-    </div>
+      :message="feed.error ?? ''"
+      @retry="feed.reload()"
+    />
 
     <p
       v-else-if="feed.status === 'success' && feed.posts.length === 0"
@@ -114,5 +108,12 @@ const feed = useFeedStore()
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
   }
+}
+
+/* The error card brings its own surface; inset it like the profile page. */
+.post-feed.post-feed--error {
+  padding: var(--space-4);
+  background: none;
+  box-shadow: none;
 }
 </style>
