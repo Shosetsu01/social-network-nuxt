@@ -85,3 +85,16 @@ test('18. a slow profile shows the skeleton during client navigation', async ({ 
   await expect(authorHeading(page)).toBeVisible()
   await expect(skeleton).toHaveCount(0)
 })
+
+test('19. "Back" on a post opened from the feed returns to the feed', async ({ authedPage: page }) => {
+  await gotoHydrated(page, '/')
+  const firstCard = page.getByTestId('post-card').first()
+  await firstCard.getByRole('link').filter({ has: page.locator('time') }).click()
+  await expectPathname(page, '/posts/post-1')
+  const historyLength = await page.evaluate(() => window.history.length)
+
+  await backLink(page).click()
+
+  await expectFeedRestored(page)
+  expect(await page.evaluate(() => window.history.length)).toBe(historyLength)
+})
