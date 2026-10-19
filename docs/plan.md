@@ -137,7 +137,7 @@ reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset()
 **Технические правила** (по итогам критики):
 
 - **Сессия.** Две cookie объявлены синхронно в setup стора: `socio_session` (сессионная) и `socio_session_persist` (maxAge 30 дней). В actions — только присваивание `.value`; `useCookie` после `await` не создаём. `user = persist ?? session`. Logout чистит обе.
-- **Лента.** `ensureLoaded()` в странице: `if (import.meta.server) await feed.ensureLoaded(); else feed.ensureLoaded()`. На сервере данные приходят в HTML и гидрируются Pinia. На клиенте видны скелетоны. При возврате из профиля повторного запроса нет, лайки сохраняются. Лайк — локальная операция (серверного лайка нет).
+- **Лента.** `ensureLoaded()` в странице: `if (import.meta.server) await feed.ensureLoaded(); onMounted(() => { void feed.ensureLoaded() })`. Клиент грузит после монтирования, чтобы гидрация совпала с SSR (в т.ч. при ошибке). На сервере данные приходят в HTML и гидрируются Pinia. На клиенте видны скелетоны. При возврате из профиля повторного запроса нет, лайки сохраняются. Лайк — локальная операция (серверного лайка нет).
 - **404.** `throw createError({ statusCode: 404, fatal: true })`; в `error.vue` — `clearError({ redirect: '/' })`.
 - **SSR = клиент.** `useId()` для `aria-describedby`; `<NuxtTime relative locale="en-US">`; без `window` в рендере.
 - **Картинки.** Удалённые (`picsum.photos/id/…`, `randomuser.me`). Деградация без поломки вёрстки:
