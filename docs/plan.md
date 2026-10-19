@@ -253,10 +253,11 @@ reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset()
 
 ### Контракты API (типы — `shared/types`)
 
-**`GET /api/feed?cursor=&limit=` → `FeedPage`**
-- `limit` — целое от 1 до 20, по умолчанию 6.
-- `cursor` — непрозрачная строка из `nextCursor` предыдущей страницы. Без `cursor` возвращается первая страница.
-- Невалидный `limit` или неизвестный `cursor` → 400.
+**`GET /api/feed?cursor=` → `FeedPage`**
+- Размер страницы фиксирован на сервере: 6 постов. Параметра `limit` нет.
+- Первая страница запрашивается ровно как `GET /api/feed`, без query. Glob `**/api/feed` в существующих e2e совпадает только с URL целиком.
+- `cursor` — непрозрачная строка из `nextCursor` предыдущей страницы. Строится по id поста, не по времени: `createdAt` пересчитывается от `Date.now()` на каждый запрос.
+- Неизвестный или нестроковый `cursor` → 400.
 - Порядок — по `createdAt`, сначала новые. У последней страницы `nextCursor: null`. Задержка 400 мс.
 
 **`GET /api/posts/:id` → `PostDetailsResponse`**
@@ -280,17 +281,26 @@ reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset()
   - `upsertPost(post)`;
   - `getPost(id)`.
 - **Правило слияния:** запись, которая уже есть в `entities`, не перезаписывается ответом сервера: локальный лайк важнее. Так лайк, поставленный на странице поста, виден в ленте, и наоборот. Прямая ссылка на пост тоже работает с лайком.
-- Generation counter защищает и `loadMore`. `reset()` очищает всё, включая курсор.
+- Курсор хранится в `ref`, а не в `let`, иначе он не попадёт в SSR-payload. Без этого после гидрации `hasMore=false`, «You're all caught up.» и hydration mismatch.
+- Generation counter защищает и `loadMore`.
+- `reload()` и `reset()` ставят `loadMoreStatus='idle'`, иначе отброшенный ответ оставит `pending` навсегда. `reset()` очищает всё, включая курсор.
+- `loadMore()` ничего не делает, если `status !== 'success'`, или нет курсора, или подгрузка уже идёт.
 
 **Подгрузка:**
-- Sentinel после списка, `IntersectionObserver` с запасом около 600 px снизу. Создаётся в `onMounted`, отключается в `onBeforeUnmount`.
-- Если после загрузки sentinel всё ещё виден, грузится следующая страница: observer повторно не срабатывает без изменения пересечения.
+- Sentinel после списка, `IntersectionObserver` с запасом около 600 px снизу.
+- Sentinel рендерится только в ветке `success`. При клиентском переходе (логин → лента) его ещё нет в `onMounted`. Поэтому привязка такая:
+  - `useTemplateRef` и `watch(el)`: observe/disconnect при появлении и исчезновении элемента, отключение в `onBeforeUnmount`;
+  - observer только выставляет флаг `isVisible`;
+  - загрузку запускает один `watch([isVisible, canLoadMore])`. Если sentinel виден и после загрузки, следующая страница грузится сама.
 - После ошибки автоповтора нет.
+- Восстановление прокрутки после «назад» — стандартный `scrollBehavior` Nuxt, свой не пишем.
 
 **Страница поста:**
 - `useAsyncData` с ключом `post:<id>`, `lazy: true`.
 - 404 → fatal → `error.vue`. Прочие ошибки — `ErrorState` «Could not load the post.».
-- Карточка берётся из стора (`getPost(id)`). Загруженный пост добавляется через `upsertPost`.
+- Карточка берётся из стора (`getPost(id)`).
+- Загруженный пост добавляется через `upsertPost` внутри handler `useAsyncData`: так он выполнится на SSR и попадёт в payload Pinia. Через `watch(data)` нельзя: на сервере он не сработает, SSR покажет загрузку, клиент — карточку.
+- Паттерн 404 и inline-ошибки скопировать из `pages/users/[id].vue`.
 - На своей странице у карточки нет ссылок на саму себя.
 
 ### Треки
@@ -311,7 +321,7 @@ reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset()
   - комментарии: длина равна `post.comments`.
 - e2e:
   - **12.** Прокрутка до конца ленты: 30 карточек, текст «You're all caught up.».
-  - **13.** Время в первой карточке открывает `/posts/post-1`. Есть `h1` «Post by Sarah Johnson», комментариев столько, сколько в счётчике. Лайк на странице поста виден в ленте после возврата (46).
+  - **13.** Время в первой карточке открывает `/posts/post-1`. Есть `h1` «Post by Sarah Johnson», комментариев столько, сколько в счётчике. Лайк на странице поста виден в ленте после возврата (46). Плюс прямой SSR: `gotoHydrated('/posts/post-1')` показывает карточку и комментарии.
   - **14.** Клик по аватару открывает `/users/2`. У ссылки аватара `tabindex="-1"`.
   - **15.** `/posts/unknown` → «Page not found».
 - Существующие 11 сценариев зелёные: первая страница по-прежнему 6 карточек.
@@ -320,10 +330,16 @@ reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset()
 - e2e:
   - **16.** Лента → имя автора → в профиле есть «Back» → клик → `/`, карточки на месте. В своём профиле «Back» нет.
   - **17.** Прямая ссылка `/users/2` → «Back» → `/`.
-  - **18.** При медленном ответе профиля (задержка через `page.route`) виден `profile-skeleton`.
-- Анимации лоадера и скелетона отключаются при `prefers-reduced-motion`.
+  - **18.** При клиентском переходе лента → автор с задержкой ответа через `page.route` виден `profile-skeleton`. На SSR-запрос к Nitro `page.route` не влияет.
+- `prefers-reduced-motion` уже отключает анимации глобально (`base.css`). Нужно проверить, что статичный кадр лоадера и скелетона читается.
+- API `AppSpinner` не меняется: `size?: number`, `aria-hidden`. Им пользуются `AppButton` и подгрузка ленты в треке A.
+- `AppBackLink` всегда рендерит `<a :href="fallback">` с `@click.prevent`, как `error.vue`. `@click.prevent` на `NuxtLink` переход не отменяет. `history.state.back` читается только в обработчике клика (иначе mismatch после перезагрузки): есть история — `router.back()`, иначе `navigateTo(fallback)`.
+- Скелетон профиля живёт в файлах B, `PostCardSkeleton` не трогается.
 
-**Оба:** `typecheck`, `lint`, `test`, `build` и полный `test:e2e` зелёные.
+**Оба:**
+- `typecheck`, `lint`, `test`, `build` и полный `test:e2e` зелёные.
+- Существующие спеки (`auth`, `feed`, `profile`) и `fixtures.ts` правит только главный агент. Если они мешают, это CONTRACT GAP в отчёте.
+- Ручная проверка через `node .output` — только на 3012 (A) и 3013 (B). Сервер на 3022/3023 оставлять нельзя: Playwright его переиспользует (`reuseExistingServer`), и e2e пойдёт на старой сборке.
 
 **Интеграция (главный агент):**
 - «Back» на странице поста.

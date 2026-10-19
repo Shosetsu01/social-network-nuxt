@@ -119,7 +119,7 @@
 | Post: карточка | та же `article data-testid="post-card"` с «Like» и «Bookmark»; без ссылок на саму себя |
 | Post: комментарии | `h2` «Comments»; `ul aria-label="Comments"`, элементы `li data-testid="comment"` со ссылкой на автора, текстом и временем; пусто — «No comments yet.» |
 | Post: loading / error / 404 | контейнер `aria-busy="true"`; `role="alert"` «Could not load the post.» + «Retry» (`ErrorState`); неизвестный id → «Page not found» |
-| Back | ссылка (`AppBackLink` из `@shared/ui`) с именем «Back»: при истории внутри приложения `router.back()`, иначе переход на `fallback`. В SSR — обычная ссылка на `fallback`. Только на чужом профиле и на странице поста |
+| Back | `AppBackLink` из `@shared/ui`: `<a href="<fallback>">` с именем «Back»; клик — `router.back()` при истории внутри приложения, иначе `navigateTo(fallback)`. Только на чужом профиле и на странице поста |
 | Profile: loading | контейнер `aria-busy="true"`, скелетон `data-testid="profile-skeleton"`, визуально скрытый текст «Loading profile…» |
 
 **Мок-данные (фиксированы для e2e):**
