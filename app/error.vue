@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NuxtError } from '#app'
 import { routes } from '@shared/config'
+import { isPlainClick } from '@shared/lib'
 
 interface Props {
   error: NuxtError
@@ -18,8 +19,7 @@ const description = computed(() => (isNotFound.value
 useHead({ title: () => `${title.value} · Socio Network` })
 
 function backToFeed(event: MouseEvent): void {
-  // Same guard as RouterLink: a modified click opens a new tab or window instead.
-  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+  if (!isPlainClick(event)) return
   event.preventDefault()
   void clearError({ redirect: routes.home })
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { isPlainClick } from '../lib'
 import AppIcon from './AppIcon.vue'
 
 interface Props {
@@ -25,8 +26,7 @@ function goBack(): void {
 }
 
 function onClick(event: MouseEvent): void {
-  // Same guard as RouterLink: let the browser open a new tab/window or download.
-  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+  if (!isPlainClick(event)) return
   event.preventDefault()
   goBack()
 }
