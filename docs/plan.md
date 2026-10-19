@@ -51,7 +51,17 @@ DoD:
 ## 3. Архитектура: Feature-Sliced Design поверх Nuxt 4
 
 Правило импорта: слой видит только нижележащие слои, `pages → widgets → features → entities → shared`. Slice'ы одного слоя друг друга не импортируют. Снаружи slice доступен только через свой `index.ts`.
-Автоимпорт компонентов Nuxt не используем: в FSD нужны явные импорты через публичный API. Автоимпорт Vue / Nuxt API (`ref`, `useFetch`, `defineStore`…) остаётся.
+Автоимпорт компонентов Nuxt выключен (`components: { dirs: [] }` в `nuxt.config.ts`): в FSD нужны явные импорты через публичный API. Поэтому `pathPrefix` и авто-имена вида `<FeedPostCard>` не возникают. Автоимпорт Vue / Nuxt API (`ref`, `useFetch`, `defineStore`…) остаётся.
+
+Имена компонентов фиксированы, чтобы параллельные субагенты не разошлись:
+
+| Слой / slice | Компоненты |
+|---|---|
+| `shared/ui` | `AppIcon`, `AppAvatar`, `AppButton`, `AppSpinner`, `SoundByteCard` |
+| `entities/post/ui` | `PostCard`, `PostCardSkeleton`, `PostAttachment`, `AttachmentImage`, `AttachmentGallery`, `AttachmentVideo` (sound-byte рендерит `SoundByteCard`) |
+| `entities/user/ui` | `UserLink` |
+| `features` | `LoginForm`, `LogoutButton`, `LikeButton`, `BookmarkButton` |
+| `widgets` | `AppHeader`, `BottomNav`, `PostFeed`, `UserProfile` (внутренние: `ProfileHeader`, `ProfileStats`, `ProfileConnections`) |
 
 ```
 shared/                              # корень (Nuxt 4): контракты клиент ↔ сервер, алиас #shared
@@ -129,7 +139,11 @@ reload(): Promise<void>; toggleLike(id): void; toggleBookmark(id): void; reset()
 - **Лента.** `ensureLoaded()` в странице: `if (import.meta.server) await feed.ensureLoaded(); else feed.ensureLoaded()`. На сервере данные приходят в HTML и гидрируются Pinia. На клиенте видны скелетоны. При возврате из профиля повторного запроса нет, лайки сохраняются. Лайк — локальная операция (серверного лайка нет).
 - **404.** `throw createError({ statusCode: 404, fatal: true })`; в `error.vue` — `clearError({ redirect: '/' })`.
 - **SSR = клиент.** `useId()` для `aria-describedby`; `<NuxtTime relative locale="en-US">`; без `window` в рендере.
-- **Картинки.** Удалённые (`picsum.photos/id/…`, `randomuser.me`). `AppAvatar` падает на инициалы, в том числе если ошибка случилась до гидрации (`onMounted`: `img.complete && !img.naturalWidth`). В e2e внешние запросы блокируются, тесты детерминированы.
+- **Картинки.** Удалённые (`picsum.photos/id/…`, `randomuser.me`). Деградация без поломки вёрстки:
+  - `AppAvatar` падает на инициалы, в том числе если ошибка случилась до гидрации (`onMounted`: `img.complete && !img.naturalWidth`);
+  - у медиа постов фиксированный `aspect-ratio` и нейтральный фон-плейсхолдер, поэтому битая картинка не ломает карточку.
+  В e2e внешние запросы блокируются (`page.route`), тесты детерминированы и проверяют фолбэк. Локальные копии в `public/` не кладём: лишние бинарники в репозитории и неясная лицензия портретов.
+- **Шрифты.** Lato (приложение) и Urbanist (логин) через Google Fonts `<link>` с `preconnect` и `display=swap` в `app.head`. Fallback — системный стек, поэтому без сети UI не ломается. В e2e шрифтовые запросы тоже блокируются.
 - **Мок-данные.** Разные авторы (Allan Paterson — текущий пользователь, Sarah Johnson, Mike Chen, Dina Foster и др.), 6 постов покрывают варианты оригинала.
 
 ## 5. Требования к реализации
@@ -190,7 +204,24 @@ T2–T4 идут параллельно в непересекающихся фа
 
 Коммиты (Conventional Commits): `docs` (анализ и план) → `chore` (scaffold) → `feat` (контракты и mock API) → `feat(shared)` (UI-кит и токены) → `feat(auth)` → `feat(feed)` → `feat(profile)` → `test(e2e)` → `docs` (README).
 
-## 8. Тайминг (из 4 ч)
+## 8. Разбор критики плана
+
+Ревьюер — отдельный субагент с чистым контекстом. Вердикт: «ship after fixes».
+
+| # | Замечание | Решение |
+|---|---|---|
+| 1 | BLOCKER: T2–T4 пересекаются через сторы и layout; разные имена компонентов из-за `pathPrefix` | Принято. API сторов зафиксирован в §4, `reset()` явный. Logout живёт в feature (session + feed). Layout отдан T2. Автоимпорт компонентов выключен, имена фиксированы в §3. |
+| 2 | Remember me: `useCookie` после `await` ломается | Принято: две cookie, объявленные синхронно в setup стора (§4). |
+| 3 | Не описана загрузка ленты; «оптимистичное» вводит в заблуждение | Принято: `ensureLoaded()` + схема server/client (§4), формулировка исправлена. |
+| 4 | Перегружен критический путь | Принято частично. Layouts → T2, Playwright → T5, критика брифов T2–T4 убрана. `SoundByteCard` оставлен в фундаменте: он нужен и T3, и T4, принимает примитивные пропсы и от типов T1 не зависит. Фундамент делает субагент, а главный агент ревьюит — критический путь не упирается в главный контекст. |
+| 5 | E2E: WebKit через `devices`, нет `webServer`, никто не ловит hydration mismatch | Принято: только chromium, build + node, фикстура на `pageerror` / `console.error`, `addCookies`, часть сценариев только на desktop (§6). |
+| 6 | Внешние картинки и шрифты дают флейки; фолбэк до гидрации | Принято частично. Фолбэк до гидрации и блокировка внешних запросов в e2e — да. Медиа остаются удалёнными с плейсхолдером (обоснование в §4). Шрифты: Google Fonts + системный fallback. |
+| 7 | `useFetch` не бросает на 404 | Принято: `createError({ fatal: true })` + `clearError` (§4). |
+| 8 | Не описана защита от open redirect | Принято: `safeRedirect` + unit-тесты (T0). |
+| 9 | Правила одинакового рендера на SSR и клиенте | Принято: `useId`, навигация только на CSS, `NuxtTime locale="en-US"` (§2, §4). |
+| 10 | Пропущен дефект в анализе; мок-авторы одинаковые; что добавлено, а что перенесено | Принято: дефект дописан в analysis.md, авторы разные (§4), блок «Добавлено сверх оригинала» (§2). |
+
+## 9. Тайминг (из 4 ч)
 
 | Этап | Время |
 |---|---|
