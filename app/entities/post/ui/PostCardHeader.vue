@@ -6,18 +6,27 @@ import { AppAvatar } from '@shared/ui'
 interface Props {
   post: Post
   isEager?: boolean
+  hasPostLinks?: boolean
 }
 
-withDefaults(defineProps<Props>(), { isEager: false })
+withDefaults(defineProps<Props>(), { isEager: false, hasPostLinks: true })
 </script>
 
 <template>
   <header class="post-card-header">
-    <AppAvatar
-      :src="post.author.avatarUrl"
-      :name="post.author.name"
-      :is-eager="isEager"
-    />
+    <!-- A duplicate of the author name link: hidden from assistive tech and skipped by Tab. -->
+    <NuxtLink
+      class="post-card-header__avatar"
+      :to="routes.user(post.author.id)"
+      aria-hidden="true"
+      tabindex="-1"
+    >
+      <AppAvatar
+        :src="post.author.avatarUrl"
+        :name="post.author.name"
+        :is-eager="isEager"
+      />
+    </NuxtLink>
     <div class="post-card-header__body">
       <p class="post-card-header__headline">
         <NuxtLink
@@ -50,7 +59,19 @@ withDefaults(defineProps<Props>(), { isEager: false })
           </template>.
         </template>
       </p>
+      <NuxtLink
+        v-if="hasPostLinks"
+        class="post-card-header__time post-card-header__time-link"
+        :to="routes.post(post.id)"
+      >
+        <NuxtTime
+          :datetime="post.createdAt"
+          relative
+          locale="en-US"
+        />
+      </NuxtLink>
       <NuxtTime
+        v-else
         class="post-card-header__time"
         :datetime="post.createdAt"
         relative
@@ -65,6 +86,12 @@ withDefaults(defineProps<Props>(), { isEager: false })
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
+}
+
+.post-card-header__avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
 }
 
 .post-card-header__body {
@@ -93,7 +120,16 @@ withDefaults(defineProps<Props>(), { isEager: false })
 }
 
 .post-card-header__time {
+  justify-self: start;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+}
+
+.post-card-header__time-link {
+  text-decoration: none;
+}
+
+.post-card-header__time-link:hover {
+  text-decoration: underline;
 }
 </style>

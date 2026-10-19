@@ -22,6 +22,7 @@ defineProps<Props>()
       <PostCard
         :post="post"
         is-eager
+        :has-post-links="false"
       >
         <template #actions>
           <LikeButton
