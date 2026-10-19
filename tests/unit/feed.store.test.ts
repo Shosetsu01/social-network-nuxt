@@ -114,6 +114,47 @@ describe('useFeedStore', () => {
     expect(feed.posts[0]).toEqual(POSTS[0])
   })
 
+  it('drops a response that arrives after reset and loads again on the next ensureLoaded', async () => {
+    let resolveStale: (posts: Post[]) => void = () => {}
+    const freshPosts = [makePost({ id: 'post-3' })]
+    getFeed
+      .mockReturnValueOnce(new Promise((done) => { resolveStale = done }))
+      .mockResolvedValueOnce(freshPosts)
+    const feed = useFeedStore()
+
+    const stale = feed.ensureLoaded()
+    feed.reset()
+    resolveStale(POSTS)
+    await stale
+
+    expect(feed.status).toBe('idle')
+    expect(feed.posts).toEqual([])
+
+    await feed.ensureLoaded()
+
+    expect(getFeed).toHaveBeenCalledTimes(2)
+    expect(feed.status).toBe('success')
+    expect(feed.posts).toEqual(freshPosts)
+  })
+
+  it('keeps the newer feed when a request from before reset resolves late', async () => {
+    let resolveStale: (posts: Post[]) => void = () => {}
+    const freshPosts = [makePost({ id: 'post-3' })]
+    getFeed
+      .mockReturnValueOnce(new Promise((done) => { resolveStale = done }))
+      .mockResolvedValueOnce(freshPosts)
+    const feed = useFeedStore()
+
+    const stale = feed.ensureLoaded()
+    feed.reset()
+    await feed.ensureLoaded()
+    resolveStale(POSTS)
+    await stale
+
+    expect(feed.status).toBe('success')
+    expect(feed.posts).toEqual(freshPosts)
+  })
+
   it('reset returns to the initial state so the next ensureLoaded refetches', async () => {
     getFeed.mockResolvedValue(POSTS)
     const feed = useFeedStore()

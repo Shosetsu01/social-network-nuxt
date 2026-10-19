@@ -6,6 +6,10 @@ const SESSION_COOKIE = 'socio_session'
 const PERSISTENT_SESSION_COOKIE = 'socio_session_persist'
 const PERSISTENT_SESSION_MAX_AGE_S = 60 * 60 * 24 * 30
 
+/**
+ * Both cookies hold a SessionUser as JSON: `{ id, name, avatarUrl, email }`, all strings.
+ * useCookie (de)serialises it itself; on the wire the value is `encodeURIComponent(JSON.stringify(user))`.
+ */
 function isSessionUser(value: unknown): value is SessionUser {
   return typeof value === 'object'
     && value !== null

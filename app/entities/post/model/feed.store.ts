@@ -11,16 +11,24 @@ export const useFeedStore = defineStore('feed', () => {
   const posts = ref<Post[]>([])
   const status = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
   const error = ref<string | null>(null)
+  // Bumped by every load and by reset(): a response that belongs to an older generation is dropped,
+  // so a feed requested before logout cannot reappear after it.
+  let generation = 0
 
   async function reload(): Promise<void> {
     if (status.value === 'pending') return
+    generation += 1
+    const requestGeneration = generation
     status.value = 'pending'
     error.value = null
     try {
-      posts.value = await postService.getFeed()
+      const result = await postService.getFeed()
+      if (requestGeneration !== generation) return
+      posts.value = result
       status.value = 'success'
     }
     catch {
+      if (requestGeneration !== generation) return
       // Every cause leads to the same UI: a fixed message with Retry.
       error.value = LOAD_ERROR_MESSAGE
       status.value = 'error'
@@ -45,6 +53,7 @@ export const useFeedStore = defineStore('feed', () => {
   }
 
   function reset(): void {
+    generation += 1
     posts.value = []
     status.value = 'idle'
     error.value = null

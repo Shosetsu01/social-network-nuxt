@@ -7,9 +7,11 @@ interface Props {
   size?: number
   /** Empty by default: avatars usually sit next to the visible name. */
   alt?: string
+  /** For first-screen avatars (header, profile): load immediately with high priority. */
+  isEager?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), { size: 48, alt: '' })
+const props = withDefaults(defineProps<Props>(), { size: 48, alt: '', isEager: false })
 
 const image = useTemplateRef<HTMLImageElement>('image')
 const hasError = ref(false)
@@ -44,7 +46,8 @@ onMounted(() => {
       :alt="alt"
       :width="size"
       :height="size"
-      loading="lazy"
+      :loading="isEager ? 'eager' : 'lazy'"
+      :fetchpriority="isEager ? 'high' : undefined"
       decoding="async"
       @error="hasError = true"
     >

@@ -86,8 +86,8 @@ describe('getUserProfile', () => {
     }
   })
 
-  it('returns null for an unknown id', () => {
-    expect(getUserProfile('999')).toBeNull()
+  it.each(['999', '__proto__', 'constructor', ''])('returns null for unknown id %j', (id) => {
+    expect(getUserProfile(id)).toBeNull()
   })
 })
 
