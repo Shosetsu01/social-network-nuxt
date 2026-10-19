@@ -1,10 +1,18 @@
 // @ts-check
 import withNuxt from './.nuxt/eslint.config.mjs'
 
+const LAYERS = ['shared', 'entities', 'features', 'widgets']
+
 // FSD: a slice is reachable only through its public API (index.ts), never by a deep path.
 const DEEP_IMPORTS = {
-  group: ['~/shared/*/*', '~/entities/*/*', '~/features/*/*', '~/widgets/*/*'],
+  group: LAYERS.map(layer => `@${layer}/*/*`),
   message: 'FSD: import a slice through its public API (index.ts), not a deep path.',
+}
+
+// One import style: layer aliases, not `~/<layer>` paths.
+const LEGACY_LAYER_PATHS = {
+  group: LAYERS.map(layer => `~/${layer}`),
+  message: 'Use the FSD layer alias (@shared, @entities, @features, @widgets) instead of a ~/ path.',
 }
 
 const layerOf = (layer, forbidden) => ({
@@ -13,8 +21,9 @@ const layerOf = (layer, forbidden) => ({
     'no-restricted-imports': ['error', {
       patterns: [
         DEEP_IMPORTS,
+        LEGACY_LAYER_PATHS,
         {
-          group: forbidden.map(name => `~/${name}`),
+          group: forbidden.flatMap(name => [`@${name}`, `~/${name}`]),
           message: `FSD: the ${layer} layer may import only from the layers below it (and not from sibling slices).`,
         },
       ],
@@ -28,7 +37,7 @@ export default withNuxt(
       'no-console': 'error',
       'vue/no-v-html': 'error',
       'vue/block-order': ['error', { order: ['script', 'template', 'style'] }],
-      'no-restricted-imports': ['error', { patterns: [DEEP_IMPORTS] }],
+      'no-restricted-imports': ['error', { patterns: [DEEP_IMPORTS, LEGACY_LAYER_PATHS] }],
     },
   },
   // Sibling slices are forbidden too: inside a slice, imports are relative.

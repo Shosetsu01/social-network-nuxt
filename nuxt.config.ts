@@ -1,7 +1,16 @@
+import { fileURLToPath } from 'node:url'
+
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@nuxt/eslint'],
   // FSD: components are imported explicitly through slice public APIs.
   components: { dirs: [] },
+  // FSD layer aliases: `@entities/post` instead of `~/entities/post`. `#shared` stays for client/server contracts.
+  alias: {
+    '@shared': fileURLToPath(new URL('./app/shared', import.meta.url)),
+    '@entities': fileURLToPath(new URL('./app/entities', import.meta.url)),
+    '@features': fileURLToPath(new URL('./app/features', import.meta.url)),
+    '@widgets': fileURLToPath(new URL('./app/widgets', import.meta.url)),
+  },
   css: ['~/assets/styles/tokens.css', '~/assets/styles/base.css'],
   app: {
     head: {

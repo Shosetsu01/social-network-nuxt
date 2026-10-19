@@ -1,11 +1,11 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Post } from '#shared/types/post'
-import { postService } from '~/entities/post/api/post.service'
-import { useFeedStore } from '~/entities/post/model/feed.store'
+import { postService } from '@entities/post/api/post.service'
+import { useFeedStore } from '@entities/post/model/feed.store'
 import { makePost } from './fixtures'
 
-vi.mock('~/entities/post/api/post.service', () => ({ postService: { getFeed: vi.fn() } }))
+vi.mock('@entities/post/api/post.service', () => ({ postService: { getFeed: vi.fn() } }))
 
 const getFeed = vi.mocked(postService.getFeed)
 const POSTS = [makePost({ id: 'post-1', likes: 10 }), makePost({ id: 'post-2', likes: 3 })]

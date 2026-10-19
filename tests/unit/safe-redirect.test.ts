@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { safeRedirect } from '~/shared/lib/safe-redirect'
+import { safeRedirect } from '@shared/lib/safe-redirect'
 
 describe('safeRedirect', () => {
   it.each([

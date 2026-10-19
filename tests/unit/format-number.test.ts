@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCompactNumber } from '~/shared/lib/format-number'
+import { formatCompactNumber } from '@shared/lib/format-number'
 
 describe('formatCompactNumber', () => {
   it.each([

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { withToggledBookmark, withToggledLike } from '~/entities/post/lib/post'
+import { withToggledBookmark, withToggledLike } from '@entities/post/lib/post'
 import { makePost } from './fixtures'
 
 describe('withToggledLike', () => {

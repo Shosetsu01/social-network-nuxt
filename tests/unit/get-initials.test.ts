@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getInitials } from '~/shared/lib/get-initials'
+import { getInitials } from '@shared/lib/get-initials'
 
 describe('getInitials', () => {
   it.each([

@@ -1,5 +1,5 @@
 import type { LoginRequest, LoginResponse } from '#shared/types/api'
-import { http } from '~/shared/api'
+import { http } from '@shared/api'
 
 export const sessionService = {
   login: (body: LoginRequest): Promise<LoginResponse> =>
