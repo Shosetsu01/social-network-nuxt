@@ -1,5 +1,5 @@
-import type { FeedPage } from '#shared/types/api'
-import type { MediaImage, Post, SoundByte } from '#shared/types/post'
+import type { FeedPage, PostDetailsResponse } from '#shared/types/api'
+import type { MediaImage, Post, PostComment, SoundByte } from '#shared/types/post'
 import { CURRENT_USER_ID, HTML_TIP_PART_3, picsum, summaryOf } from './mock-db'
 
 export const FEED_PAGE_SIZE = 6
@@ -35,6 +35,19 @@ const SOUND_BYTES: readonly SoundByte[] = [
   { id: 'sb-css-grid', title: 'CSS Grid in 3 Minutes', tag: 'Tutorial', publishedAt: '2020-10-08T10:00:00.000Z' },
   { id: 'sb-standups', title: 'Shorter Standups', tag: 'Advice', publishedAt: '2020-09-24T08:30:00.000Z' },
 ]
+
+const COMMENT_TEXTS = [
+  'Love this!',
+  'Great shot, where was this taken?',
+  'Congrats, well deserved.',
+  'This made my day.',
+  'Totally agree with you.',
+  'Thanks for sharing, saving it for later.',
+  'Can you share more details?',
+  'So cool! Count me in next time.',
+  'Wow, that looks amazing.',
+  'Nice one!',
+] as const
 
 type HoursAgo = (hours: number) => string
 type PostContent = Pick<Post, 'activity' | 'text' | 'attachment'>
@@ -192,4 +205,24 @@ export function getFeedPage(now: number, cursor: unknown): FeedPage | null {
   if (start < 0) return null
   const end = start + FEED_PAGE_SIZE
   return { posts: posts.slice(start, end), nextCursor: posts[end]?.id ?? null }
+}
+
+// Evenly spread between the post and now, oldest first; content depends only on the post position.
+function commentsOf(post: Post, postIndex: number, now: number): PostComment[] {
+  const postTime = Date.parse(post.createdAt)
+  const step = (now - postTime) / (post.comments + 1)
+  return Array.from({ length: post.comments }, (_, index) => ({
+    id: `${post.id}-comment-${index + 1}`,
+    author: summaryOf(pick(AUTHOR_IDS, postIndex + index)),
+    text: pick(COMMENT_TEXTS, postIndex * 3 + index),
+    createdAt: new Date(Math.round(postTime + (index + 1) * step)).toISOString(),
+  }))
+}
+
+export function getPostDetails(now: number, id: string): PostDetailsResponse | null {
+  const posts = getFeed(now)
+  const index = posts.findIndex(post => post.id === id)
+  const post = posts[index]
+  if (!post) return null
+  return { post, comments: commentsOf(post, index, now) }
 }

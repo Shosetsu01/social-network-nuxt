@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { MediaImage, Post } from '#shared/types/post'
 import { getUserProfile } from '../../server/utils/mock-db'
-import { FEED_PAGE_SIZE, getFeed, getFeedPage } from '../../server/utils/mock-posts'
+import { FEED_PAGE_SIZE, getFeed, getFeedPage, getPostDetails } from '../../server/utils/mock-posts'
 
 const NOW = Date.parse('2026-10-19T12:00:00.000Z')
 const POST_COUNT = 30
@@ -121,5 +121,34 @@ describe('getFeedPage', () => {
     ['a number', 7],
   ])('rejects %s as a cursor', (_, cursor) => {
     expect(getFeedPage(NOW, cursor)).toBeNull()
+  })
+})
+
+describe('getPostDetails', () => {
+  it.each(getFeed(NOW).map(post => [post.id, post.comments]))('returns %s with exactly its %i comments', (id, count) => {
+    expect(getPostDetails(NOW, String(id))?.comments).toHaveLength(Number(count))
+  })
+
+  it('returns the post itself and comments oldest first, between the post and now', () => {
+    const details = getPostDetails(NOW, 'post-1')
+    expect(details?.post).toEqual(getFeed(NOW)[0])
+    const times = details?.comments.map(comment => Date.parse(comment.createdAt)) ?? []
+    expect(times).toEqual([...times].sort((a, b) => a - b))
+    expect(times.every(time => time > Date.parse(details?.post.createdAt ?? '') && time < NOW)).toBe(true)
+  })
+
+  it('builds the same comments on every call, with unique ids and existing authors', () => {
+    const comments = getPostDetails(NOW, 'post-6')?.comments ?? []
+    expect(getPostDetails(NOW, 'post-6')?.comments).toEqual(comments)
+    expect(new Set(comments.map(comment => comment.id)).size).toBe(comments.length)
+    expect(comments.every(comment => getUserProfile(comment.author.id) !== null && comment.text !== '')).toBe(true)
+  })
+
+  it('has at least one post without comments', () => {
+    expect(getFeed(NOW).some(post => post.comments === 0)).toBe(true)
+  })
+
+  it.each(['x', 'post-0', 'post-31', '__proto__', ''])('returns null for unknown id %j', (id) => {
+    expect(getPostDetails(NOW, id)).toBeNull()
   })
 })
