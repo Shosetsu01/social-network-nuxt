@@ -23,6 +23,7 @@ const visibleImages = computed(() => props.images.slice(0, 3))
       :width="image.width"
       :height="image.height"
       :loading="isEager ? 'eager' : 'lazy'"
+      :fetchpriority="isEager ? 'high' : undefined"
       decoding="async"
     >
   </div>

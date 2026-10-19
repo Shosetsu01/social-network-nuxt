@@ -21,6 +21,7 @@ withDefaults(defineProps<Props>(), { isEager: false })
       :height="poster.height"
       :style="{ aspectRatio: `${poster.width} / ${poster.height}` }"
       :loading="isEager ? 'eager' : 'lazy'"
+      :fetchpriority="isEager ? 'high' : undefined"
       decoding="async"
     >
     <span class="attachment-video__play">
