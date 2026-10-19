@@ -31,6 +31,6 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     // Unit tests run outside the Nuxt runtime but should still be type-checked.
-    tsConfig: { include: ['../tests/unit/**/*'] },
+    tsConfig: { include: ['../tests/unit/**/*', '../tests/e2e/**/*', '../playwright.config.ts'] },
   },
 })
