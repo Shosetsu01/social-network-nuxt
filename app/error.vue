@@ -17,8 +17,11 @@ const description = computed(() => (isNotFound.value
 
 useHead({ title: () => `${title.value} · Socio Network` })
 
-function backToFeed(): Promise<void> {
-  return clearError({ redirect: routes.home })
+function backToFeed(event: MouseEvent): void {
+  // Same guard as RouterLink: a modified click opens a new tab or window instead.
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+  event.preventDefault()
+  void clearError({ redirect: routes.home })
 }
 </script>
 
@@ -40,7 +43,7 @@ function backToFeed(): Promise<void> {
     <a
       class="error-page__link"
       :href="routes.home"
-      @click.prevent="backToFeed"
+      @click="backToFeed"
     >
       Back to feed
     </a>
