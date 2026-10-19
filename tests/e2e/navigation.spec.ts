@@ -5,8 +5,6 @@ import { expectPathname, gotoHydrated } from './helpers'
 // Author of the first feed post (mock-db: post-1).
 const FIRST_POST_AUTHOR = { id: '2', name: 'Sarah Johnson' } as const
 const AUTHOR_PROFILE_PATH = `/users/${FIRST_POST_AUTHOR.id}`
-// Long enough to see the skeleton, short enough to keep the test fast.
-const PROFILE_RESPONSE_DELAY_MS = 1500
 
 function backLink(page: Page): Locator {
   return page.getByRole('link', { name: 'Back', exact: true })
@@ -34,10 +32,13 @@ test('16. "Back" on another user\'s profile returns to the feed; the own profile
   await openAuthorFromFeed(page)
   await expect(authorHeading(page)).toBeVisible()
   await expect(backLink(page)).toHaveAttribute('href', '/')
+  // router.back() keeps the history length; the fallback navigation would push a new entry.
+  const historyLength = await page.evaluate(() => window.history.length)
 
   await backLink(page).click()
 
   await expectFeedRestored(page)
+  expect(await page.evaluate(() => window.history.length)).toBe(historyLength)
 
   await gotoHydrated(page, `/users/${CURRENT_USER.id}`)
 
@@ -49,15 +50,26 @@ test('17. "Back" on a directly opened profile falls back to the feed', async ({ 
   await gotoHydrated(page, AUTHOR_PROFILE_PATH)
   await expect(authorHeading(page)).toBeVisible()
 
+  // A modified click is left to the browser: the fallback opens in a new window, this page stays.
+  // A Shift+click window has no opener, so Chromium reports it as a new context page, not a 'popup'.
+  const newWindowEvent = page.context().waitForEvent('page')
+  await backLink(page).click({ modifiers: ['Shift'] })
+  const newWindow = await newWindowEvent
+  await expect(newWindow).toHaveURL(url => url.pathname === '/')
+  await newWindow.close()
+  await expectPathname(page, AUTHOR_PROFILE_PATH)
+
   await backLink(page).click()
 
   await expectFeedRestored(page)
 })
 
 test('18. a slow profile shows the skeleton during client navigation', async ({ authedPage: page }) => {
-  // Only the browser request is delayed: page.route does not reach the SSR fetch inside Nitro.
+  // The profile response waits for the gate, so the skeleton is asserted without a timing race.
+  // Only the browser request is held: page.route does not reach the SSR fetch inside Nitro.
+  const { promise: gate, resolve: release } = Promise.withResolvers<undefined>()
   await page.route(`**/api/users/${FIRST_POST_AUTHOR.id}`, async (route) => {
-    await new Promise(resolve => setTimeout(resolve, PROFILE_RESPONSE_DELAY_MS))
+    await gate
     await route.continue()
   })
 
@@ -67,6 +79,8 @@ test('18. a slow profile shows the skeleton during client navigation', async ({ 
   await expect(skeleton).toBeVisible()
   await expect(skeleton).toHaveAttribute('aria-busy', 'true')
   await expect(skeleton).toContainText('Loading profile…')
+
+  release(undefined)
 
   await expect(authorHeading(page)).toBeVisible()
   await expect(skeleton).toHaveCount(0)

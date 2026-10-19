@@ -90,8 +90,8 @@ const STAT_COUNT = 3
 
 .profile-skeleton__name {
   width: min(14rem, 70%);
-  height: var(--font-size-xl);
-  margin-block: var(--space-2) var(--space-1);
+  height: calc(var(--font-size-xl) * var(--line-height-tight));
+  margin-block: var(--space-2) 0;
 }
 
 .profile-skeleton__meta {
@@ -115,7 +115,7 @@ const STAT_COUNT = 3
 .profile-skeleton__stat {
   display: grid;
   justify-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .profile-skeleton__stat + .profile-skeleton__stat {
@@ -124,12 +124,12 @@ const STAT_COUNT = 3
 
 .profile-skeleton__stat-value {
   width: 3rem;
-  height: var(--font-size-xl);
+  height: calc(var(--font-size-xl) * var(--line-height-tight));
 }
 
 .profile-skeleton__stat-label {
   width: 4.5rem;
-  height: var(--font-size-sm);
+  height: calc(var(--font-size-sm) * var(--line-height-normal));
 }
 
 .profile-skeleton__heading {
@@ -167,7 +167,7 @@ const STAT_COUNT = 3
   }
 
   .profile-skeleton__name {
-    height: var(--font-size-2xl);
+    height: calc(var(--font-size-2xl) * var(--line-height-tight));
   }
 }
 </style>

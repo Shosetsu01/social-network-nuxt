@@ -23,6 +23,13 @@ function goBack(): void {
   }
   void navigateTo(props.fallback)
 }
+
+function onClick(event: MouseEvent): void {
+  // Same guard as RouterLink: let the browser open a new tab/window or download.
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return
+  event.preventDefault()
+  goBack()
+}
 </script>
 
 <template>
@@ -30,7 +37,7 @@ function goBack(): void {
   <a
     class="app-back-link"
     :href="fallback"
-    @click.prevent="goBack"
+    @click="onClick"
   >
     <AppIcon
       name="arrow-left"
