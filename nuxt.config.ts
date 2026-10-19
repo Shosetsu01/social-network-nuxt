@@ -2,6 +2,7 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@nuxt/eslint'],
   // FSD: components are imported explicitly through slice public APIs.
   components: { dirs: [] },
+  css: ['~/assets/styles/tokens.css', '~/assets/styles/base.css'],
   app: {
     head: {
       title: 'Socio Network',
