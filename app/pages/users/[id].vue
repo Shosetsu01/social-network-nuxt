@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useSessionStore } from '@entities/session'
 import { userService } from '@entities/user'
-import { AppSpinner, ErrorState } from '@shared/ui'
-import { UserProfile } from '@widgets/user-profile'
+import { routes } from '@shared/config'
+import { AppBackLink, ErrorState } from '@shared/ui'
+import { ProfileSkeleton, UserProfile } from '@widgets/user-profile'
 
 const NOT_FOUND_STATUS = 404
 
@@ -42,6 +43,12 @@ watch(error, value => throwIfNotFound(value?.statusCode))
 
 <template>
   <div class="profile-page">
+    <!-- Known before the data arrives, so the way back is there while the profile loads or fails. -->
+    <AppBackLink
+      v-if="!isOwnProfile"
+      class="profile-page__back"
+      :fallback="routes.home"
+    />
     <!-- After an id change the previous profile stays as placeholder data: render only a settled request. -->
     <UserProfile
       v-if="status === 'success' && profile"
@@ -53,34 +60,34 @@ watch(error, value => throwIfNotFound(value?.statusCode))
       message="Could not load the profile."
       @retry="refresh()"
     />
-    <p
+    <div
       v-else
-      class="profile-page__state"
-      role="status"
+      aria-busy="true"
+      data-testid="profile-skeleton"
     >
-      <AppSpinner :size="24" />
-      Loading profile…
-    </p>
+      <p class="visually-hidden">
+        Loading profile…
+      </p>
+      <ProfileSkeleton />
+    </div>
   </div>
 </template>
 
 <style scoped>
 .profile-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
   width: 100%;
   max-width: var(--content-max-width);
   margin-inline: auto;
   padding: var(--space-4);
 }
 
-.profile-page__state {
-  display: flex;
-  flex-wrap: wrap;
-  place-content: center;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 16rem;
-  color: var(--color-text-muted);
-  text-align: center;
+/* Optical alignment: the arrow lines up with the card edge, the padding stays part of the tap target. */
+.profile-page__back {
+  justify-self: start;
+  margin-inline-start: calc(-1 * var(--space-3));
 }
 
 @media (min-width: 640px) {

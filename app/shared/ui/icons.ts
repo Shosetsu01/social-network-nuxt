@@ -1,5 +1,6 @@
 // Feather Icons (MIT), with circles, lines and polylines rewritten as <path> data on a 24×24 grid.
 export const ICON_PATHS = {
+  'arrow-left': ['M19 12H5', 'M12 19l-7-7 7-7'],
   'home': ['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'M9 22V12h6v10'],
   'user': ['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', 'M8 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0'],
   'eye': ['M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z', 'M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0'],

@@ -1,4 +1,5 @@
 export { default as AppAvatar } from './AppAvatar.vue'
+export { default as AppBackLink } from './AppBackLink.vue'
 export { default as AppButton } from './AppButton.vue'
 export { default as AppIcon } from './AppIcon.vue'
 export { default as AppSpinner } from './AppSpinner.vue'
