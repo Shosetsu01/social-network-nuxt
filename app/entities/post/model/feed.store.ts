@@ -20,7 +20,7 @@ export const useFeedStore = defineStore('feed', () => {
   // so a feed requested before logout cannot reappear after it.
   let generation = 0
 
-  const posts = computed(() => feedIds.value.flatMap(id => entities.value[id] ?? []))
+  const posts = computed(() => feedIds.value.flatMap(id => getPost(id) ?? []))
   const hasMore = computed(() => nextCursor.value !== null)
 
   // A record the store already has wins over the server copy: a local like must not be undone by a refetch.
@@ -83,12 +83,13 @@ export const useFeedStore = defineStore('feed', () => {
     mergeEntities([post])
   }
 
+  // Own keys only: `entities.constructor` would otherwise be Object itself.
   function getPost(id: string): Post | undefined {
-    return entities.value[id]
+    return Object.hasOwn(entities.value, id) ? entities.value[id] : undefined
   }
 
   function updatePost(id: string, update: (post: Post) => Post): void {
-    const post = entities.value[id]
+    const post = getPost(id)
     if (!post) return
     entities.value = { ...entities.value, [id]: update(post) }
   }

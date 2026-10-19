@@ -3,14 +3,18 @@ import type { Post, PostComment } from '#shared/types/post'
 import { PostCard } from '@entities/post'
 import { BookmarkButton } from '@features/toggle-bookmark'
 import { LikeButton } from '@features/toggle-like'
+import { AppSpinner, ErrorState } from '@shared/ui'
 import PostComments from './PostComments.vue'
 
 interface Props {
   post: Post
-  comments: PostComment[]
+  /** Absent while the request is in flight or failed: the card is already known from the feed store. */
+  comments?: PostComment[]
+  hasError?: boolean
 }
 
-defineProps<Props>()
+withDefaults(defineProps<Props>(), { comments: undefined, hasError: false })
+defineEmits<{ retry: [] }>()
 </script>
 
 <template>
@@ -37,7 +41,26 @@ defineProps<Props>()
         </template>
       </PostCard>
     </div>
-    <PostComments :comments="comments" />
+    <PostComments
+      v-if="comments"
+      :comments="comments"
+    />
+    <ErrorState
+      v-else-if="hasError"
+      class="post-details__error"
+      message="Could not load the post."
+      @retry="$emit('retry')"
+    />
+    <div
+      v-else
+      class="post-details__loading"
+      aria-busy="true"
+    >
+      <AppSpinner :size="24" />
+      <p class="visually-hidden">
+        Loading comments…
+      </p>
+    </div>
   </div>
 </template>
 
@@ -51,9 +74,25 @@ defineProps<Props>()
   background: var(--color-surface);
 }
 
+.post-details__error {
+  margin-inline: var(--space-4);
+}
+
+.post-details__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(var(--tap-size) * 2);
+  color: var(--color-text-muted);
+}
+
 @media (min-width: 640px) {
   .post-details {
     gap: var(--space-5);
+  }
+
+  .post-details__error {
+    margin-inline: 0;
   }
 
   .post-details__card {

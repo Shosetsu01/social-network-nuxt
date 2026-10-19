@@ -16,6 +16,9 @@ const canLoadMore = computed(() => feed.status === 'success' && feed.hasMore && 
 
 async function loadNextPage(): Promise<void> {
   const countBefore = feed.posts.length
+  // Stale until the re-keyed sentinel gets a fresh observer: otherwise canLoadMore turning true again
+  // would load a second page for the same scroll.
+  isSentinelVisible.value = false
   // Cleared first: setting the same text again would not be announced.
   announcement.value = ''
   await feed.loadMore()
@@ -39,8 +42,8 @@ watch(sentinel, (element) => {
   observer.observe(element)
 }, { flush: 'post' })
 
-// One trigger for both cases: the sentinel scrolls into view, or a page lands while it is still in view.
-// An error turns canLoadMore off, so there is no automatic retry.
+// One trigger for both cases: the sentinel scrolls into view, or a page lands while it is still in view
+// (a tall screen keeps filling up). An error turns canLoadMore off, so there is no automatic retry.
 watch([isSentinelVisible, canLoadMore], ([isVisible, canLoad]) => {
   if (isVisible && canLoad) void loadNextPage()
 })
@@ -50,7 +53,9 @@ onBeforeUnmount(disconnect)
 
 <template>
   <div class="feed-load-more">
+    <!-- Re-keyed per page: a new element gets a new observer, whose first report says whether it is still in range. -->
     <div
+      :key="feed.posts.length"
       ref="sentinel"
       class="feed-load-more__sentinel"
       aria-hidden="true"

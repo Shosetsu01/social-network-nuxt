@@ -26,6 +26,24 @@ test('12. scrolling to the end loads all 30 posts and says the feed is over', as
   await expect(page.getByTestId('feed-loading-more')).toHaveCount(0)
 })
 
+test('12a. one scroll to the bottom loads exactly one more page', async ({ authedPage: page }) => {
+  const nextPageRequests: string[] = []
+  page.on('request', (request) => {
+    if (isNextPageRequest(new URL(request.url()))) nextPageRequests.push(request.url())
+  })
+  await gotoHydrated(page, '/')
+  const cards = page.getByTestId('post-card')
+  await expect(cards).toHaveCount(PAGE_SIZE)
+
+  await cards.last().scrollIntoViewIfNeeded()
+
+  await expect(cards).toHaveCount(PAGE_SIZE * 2)
+  // A second page would be requested right after the first lands; network idle proves it was not.
+  await page.waitForLoadState('networkidle')
+  expect(nextPageRequests).toHaveLength(1)
+  await expect(cards).toHaveCount(PAGE_SIZE * 2)
+})
+
 test('12b. a failed next page keeps the loaded posts, and Retry loads it with a busy indicator', async ({ authedPage: page }) => {
   let shouldFail = true
   let releaseRetry = (): void => {}

@@ -328,6 +328,9 @@ describe('useFeedStore', () => {
       const feed = useFeedStore()
 
       expect(feed.getPost('missing')).toBeUndefined()
+      expect(feed.getPost('constructor')).toBeUndefined()
+      feed.toggleLike('constructor')
+      expect(feed.getPost('constructor')).toBeUndefined()
       feed.upsertPost(makePost({ id: 'constructor' }))
       expect(feed.getPost('constructor')).toMatchObject({ id: 'constructor' })
     })

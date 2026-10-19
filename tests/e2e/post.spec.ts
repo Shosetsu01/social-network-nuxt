@@ -11,6 +11,8 @@ const FIRST_POST = {
 }
 const POST_API = '**/api/posts/post-1'
 
+type NuxtWindow = Window & { useNuxtApp?: () => { $router: { push: (path: string) => Promise<unknown> } } }
+
 async function openFirstCard(page: Page): Promise<Locator> {
   await gotoHydrated(page, '/')
   const firstCard = page.getByTestId('post-card').first()
@@ -53,6 +55,19 @@ test('13. the time of the first card opens its post page, and a like there shows
   await expectPathname(page, '/')
   await expect(firstCard.getByRole('button', { name: 'Like', exact: true })).toHaveAttribute('aria-pressed', 'true')
   await expect(firstCard.getByTestId('like-count')).toHaveText(String(FIRST_POST.likes + 1))
+})
+
+test('13d. a like given in the feed shows on the post page', async ({ authedPage: page }) => {
+  const firstCard = await openFirstCard(page)
+  await firstCard.getByRole('button', { name: 'Like', exact: true }).click()
+  await expect(firstCard.getByTestId('like-count')).toHaveText(String(FIRST_POST.likes + 1))
+
+  await timeLink(firstCard).click()
+
+  await expectPathname(page, FIRST_POST.path)
+  const card = await expectPostPage(page)
+  await expect(card.getByRole('button', { name: 'Like', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(card.getByTestId('like-count')).toHaveText(String(FIRST_POST.likes + 1))
 })
 
 test('13b. a direct link renders the post and its comments on the server', async ({ authedPage: page }) => {
@@ -108,5 +123,15 @@ test('15. an unknown post shows the "Page not found" page', async ({ authedPage:
   await waitForHydration(page)
 
   expect(response?.status()).toBe(404)
+  await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
+})
+
+test('15b. client navigation to an unknown post shows the "Page not found" page', async ({ authedPage: page }) => {
+  await gotoHydrated(page, '/')
+
+  await page.evaluate(async () => {
+    await (window as NuxtWindow).useNuxtApp?.().$router.push('/posts/unknown')
+  })
+
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
 })

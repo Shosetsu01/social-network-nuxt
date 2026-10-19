@@ -54,10 +54,14 @@ watch(error, value => throwIfNotFound(value?.statusCode))
       class="post-page__back"
       :fallback="routes.home"
     />
+    <!-- A post known from the feed shows at once; only its comments wait. `comments` may still hold the
+         previous post after an id change, hence the status check. -->
     <PostDetails
-      v-if="status === 'success' && post && comments"
+      v-if="post"
       :post="post"
-      :comments="comments"
+      :comments="status === 'success' ? comments : undefined"
+      :has-error="status === 'error'"
+      @retry="refresh()"
     />
     <ErrorState
       v-else-if="status === 'error'"
